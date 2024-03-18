@@ -1,96 +1,141 @@
-module axi_8bit_reg_tb;
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 18.03.2024 11:12:29
+// Design Name: 
+// Module Name: testbench
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 
+
+module testbench;
+
+reg clk,rst;
     
-    // Signals
-    reg clk ;
-    reg reset;
+//slave
+reg [7:0]s_data;
+reg s_valid;
+wire s_ready;
+reg s_last;
     
-    reg [7:0] m_data_in;
-    reg m_valid;
-    reg m_last;
-    wire m_ready;
+//master
+wire [7:0]m_data;
+wire m_valid;
+reg m_ready;
+wire m_last;
 
-    wire [7:0] s_data_out;
-    wire s_valid;
-    reg s_ready ;
-    wire s_last;
 
-    // Instantiate DUT
-    axi_8bit_reg dut (
-        .clk(clk),
-        .reset(reset),
-        .m_data_in(m_data_in),
-        .m_valid(m_valid),
-        .m_ready(m_ready),
-        .m_last(m_last),
-        .s_data_out(s_data_out),
-        .s_valid(s_valid),
-        .s_ready(s_ready),
-        .s_last(s_last)
-    );
+axi_8bit a5(.clk(clk), .rst(rst),
+                          .s_data(s_data),
+                          .s_valid(s_valid),
+                          .s_ready(s_ready),
+                          .s_last(s_last),
+                          .m_data(m_data),
+                          .m_valid(m_valid),
+                          .m_ready(m_ready),
+                          .m_last(m_last)       );
+                          
 initial
-begin
-clk =1;
-forever #10 clk = ~clk;
+ begin
+    clk = 0;
+    forever #2 clk = ~clk;
 end
-    
-    initial begin
-        // Reset
-        reset =0;
-        #10;
-        reset = 1;
-        #10;
-        reset = 0;
-        end
-        
-        initial
-        begin
 
-        // Test data
-        m_data_in = 8'h08;
-        m_valid =0;
-        s_ready = 0;  
-        m_last = 0;
-    end
-    initial
-    begin
-    #10;
-    m_valid = 1; s_ready = 1;
-    #100;
-    //generate_last_signal(100,10,390);
-    s_ready = 0;
-    #100;
-    m_valid = 0; s_ready =1;
-    #100;
-    s_ready = 0;
-    #100;
-    m_valid = 1; s_ready = 1;
-    #100
-    s_ready = 0;
-    end
-    
-    initial
-    begin
-    forever #20 m_data_in = $random;
-    end
-    
+initial begin
+    rst = 0;
+    #5;
+    rst = 1;
+    #4 ;
+    rst = 0;
+end
+
+initial begin
+s_valid = 0;
+m_ready = 0;
+s_last = 0;
+s_data = $random;
+#10;
+
+repeat(7)
+begin
+@(posedge clk)
+s_valid = 1;
+m_ready = 1;
+s_last = 0;
+s_data = $random;
+end
+s_last = 1;s_data = $random;
+#4;
+s_last = 0;s_data= 0;
+#1;
 
 
-  initial
-  begin
-  repeat (10)
-  begin
-    m_last = 0;
-  #100;
-  m_last = 1;
-  #11;
-  m_last = 0;
-  #390;
-  m_last = 1;
-  #10;
-  m_last = 0;
-  #390;
-  end
-  end
+repeat(7)
+begin
+@(posedge clk)
+s_valid = 1;
+m_ready = 0;
+s_last = 0;
+s_data = $random;
+end
+s_last = 1;s_data = $random;
+#4;
+s_last = 0;s_data= 0;
+#1;
+
+repeat(7)
+begin
+@(posedge clk)
+s_valid = 0;
+m_ready = 1;
+s_last = 0;
+s_data = $random;
+end
+s_last = 1;s_data = $random;
+#4;
+s_last = 0;s_data= 0;
+#1;
+
+
+repeat(7)
+begin
+@(posedge clk)
+s_valid = ~s_valid;
+m_ready = ~m_ready;
+s_last = 0;
+s_data = $random;
+end
+s_last = 1;s_data = $random;
+#4;
+s_last = 0;s_data= 0;
+#1;
+
+repeat(7)
+begin
+@(posedge clk)
+s_valid = 1;
+m_ready = 1;
+s_last = 0;
+s_data = $random;
+end
+s_last = 1;s_data = $random;
+#4;
+s_last = 0;s_data= 0;
+#1;
+end
+
+
 
 endmodule
