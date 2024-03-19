@@ -1,123 +1,131 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 19.03.2024 10:57:36
+// Design Name: 
+// Module Name: mux_trial_tb
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 
-module mux_axi_tb;
 
+module mux_trial_tb();
+
+//port declarations
 reg clk;
 reg reset;
-// Master 1 input
+    
+    //Selection line
+reg select;
+    
+    //Slave-1 inputs
+reg [7:0]s1_data;
+reg s1_valid;
+wire s1_ready;
+reg s1_last;
+    
+    //Slave-2 inputs
+reg [7:0]s2_data;
+reg s2_valid;
+wire s2_ready;
+reg  s2_last;
+    
+    //master
+wire [7:0]m_data;
+wire m_valid;
+reg m_ready;
+wire m_last;
+  
+//DUT Instantiation
+mux_trial m1 ( clk, reset, select, s1_data, s1_valid, s1_ready, s1_last, s2_data, s2_valid, s2_ready, s2_last, m_data, m_valid, m_ready, m_last);
 
-wire m1_ready;
-
-
-// Master 2 input
-
-wire m2_ready;
-
- // Mux control inputs
-
-// Slave output
-reg m1_valid;
-reg s_ready;
-reg m1_last;
-reg m2_valid;
-reg s_ready;
-reg m2_last;
-reg select;  // Select data from Master 
-reg [7:0]   m1_data_in;
-reg [7:0]   m2_data_in;
-wire [7:0]   s_data_out;
-wire s_valid;
-
-wire s_last;
-
-mux_axi  m1 (clk, reset, m1_data_in, m1_valid, m1_ready, m1_last, m2_data_in, m2_valid,m2_ready, m2_last, select, s_data_out, s_valid, s_ready, s_last);
-
+//cases
 initial
-begin
-    clk = 1;
-    forever #10 clk = ~clk;
+ begin
+    clk = 0;
+    forever #5 clk = ~clk;
 end
 
-initial
-begin
+initial 
+  begin
     reset = 0;
-    #100;
+    #15;
     reset = 1;
-    #50;
+    #10 ;
     reset = 0;
+  end
+
+initial 
+  begin
+     s1_valid = 0;s2_valid = 0;
+     m_ready = 0;
+     s1_last = 0;s2_last = 0;
+     s1_data = $random;
+     s2_data = $random;
+     #10;
+  end
+
+initial 
+begin
+    select = 0;
+    forever # 100 select = ~select;  
 end
 
-initial
+initial 
 begin
-     m1_data_in = 8'h3e ;
-     m2_data_in = 8'h4f ;
+    m_ready = 0;
+    forever #50 m_ready = ~m_ready;  
 end
 
-initial
-begin
-     select = 0;
-     forever #50 select = ~select;
-end
 
 initial
+begin 
+repeat(3)
 begin
-     m1_valid=0;
-     forever #60 m1_valid = ~m1_valid;
-end
-
-initial
-begin
-     m2_valid=0;
-     forever #70 m2_valid = ~m2_valid;
-end
-
-initial
-begin
-repeat(10)
-begin
-    m1_last = 0;
-    #70;
-    m1_last = 1;
+    repeat(3)
+    begin
+        @(posedge clk)
+        s1_valid = s1_valid + 1;
+        s1_last = 0;
+        s1_data = $random;
+    end
+    s1_last = 1;
+    s1_data = $random;
     #10;
-    m1_last = 0;
-    #150;
-    m1_last = 1;
+    s1_last = 0;s1_data= 0;
+    s1_valid = 0;
+    #30;
+end  
+end
+
+initial
+begin
+repeat(3)
+begin
+    repeat(7)
+    begin
+        @(posedge clk)
+        s2_valid = s2_valid + 1;
+        s2_last = 0;
+        s2_data = $random;
+    end
+    s2_last = 1;
+    s2_data = $random;
     #10;
+    s2_last = 0;s2_data= 0;
+    s2_valid = 0;
+    #30;
 end    
 end
-
-initial
-begin
-repeat(10)
-begin
-m2_last = 0;
-#70;
-m2_last = 1;
-#10;
-m2_last = 0;
-#50;
-m2_last = 1;
-#10;
-m2_last = 0;
-#90;
-m2_last = 1;
-#10;
-m2_last = 0;
-#150;
-m2_last = 1;
-#10;
-m2_last = 0;
-#150;
-m2_last = 1;
-#10;
-end
-end
-
-initial
-begin
-    s_ready = 0;
-    forever #40 s_ready = ~s_ready;
-end
-
-
-
 endmodule
