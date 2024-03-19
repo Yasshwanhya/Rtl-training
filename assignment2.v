@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 06.03.2024 12:34:18
+// Create Date: 18.03.2024 17:00:14
 // Design Name: 
-// Module Name: mux_axi
+// Module Name: mux_trial
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,106 +20,96 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module mux_axi (
-    input              clk,
-    input              reset,
-
-    // Master 1 input
-    input      [7:0]   m1_data_in,
-    input              m1_valid,
-    output       reg      m1_ready,
-    input              m1_last,
-
-    // Master 2 input
-    input      [7:0]   m2_data_in,
-    input              m2_valid,
-    output     reg        m2_ready,
-    input              m2_last,
-
-    // Mux control inputs
-    input              select,  // Select data from Master 
-
-    // Slave output
-    output reg [7:0]   s_data_out,
-    output  reg           s_valid,
-    input              s_ready,
-    output    reg         s_last
-);
-
-    // Internal registers to store data from each master
-    reg [7:0]data_reg;
-//    reg m1_valid_reg;
-//    reg m1_last_reg;
+module mux_trial(
+    input clk,
+    input reset,
     
-////    reg [7:0] m2_data_reg;
-//    reg m2_valid_reg;
-//    reg m2_last_reg;
-
-    always @(negedge clk) begin
-        if (reset==1) begin
-            // Reset internal registers
-            data_reg <= 8'b0;
-//            m1_valid_reg <= 1'b0;
-//            m1_last_reg <= 1'b0;
-
-////            m2_data_reg <= 8'b0;
-//            m2_valid_reg <= 1'b0;
-//            m2_last_reg <= 1'b0;
-        end 
-        else 
-        begin
-            // Update internal registers with data from Master 1
-            if(select == 0)
-            begin
-            if (m1_valid && s_ready ) 
-            begin
-                data_reg <= m1_data_in;
-            end
-            else
-            begin
-               data_reg<=data_reg;
-            end
-            end
-
-            // Update internal registers with data from Master 2
-             if(select == 1)
-            begin
-            if (m2_valid && s_ready ) 
-            begin
-                data_reg <= m2_data_in;
-            end
-            else
-            begin
-               data_reg<=data_reg;
-            end
-            end
-            
-           
-        end
-        
-           
-            
-        
+    //Selection line
+    input select,
+    
+    //Slave-1 inputs
+    input [7:0]s1_data,
+    input s1_valid,
+    output reg s1_ready,
+    input  s1_last,
+    
+    //Slave-2 inputs
+    input [7:0]s2_data,
+    input s2_valid,
+    output reg s2_ready,
+    input  s2_last,
+    
+    //master
+    output reg [7:0]m_data,
+    output reg m_valid,
+    input m_ready,
+    output  m_last
+  
+    );
+    
+    reg [7:0]data;
+    reg valid;
+    reg r1,r2 ;
+    reg last;
+    
+    always@(negedge clk) 
+    begin
+    valid <= select ?  s2_valid : s1_valid;
+    r1 <= select ? 0 : m_ready;
+    r2 <= select ? m_ready : 0 ;
     end
 
-    always @(negedge clk) begin
-        if (reset)
-        begin
-        s_data_out<=8'h00;
-        s_last<=0;
-        s_valid<=0;
-        m1_ready<=0;
-        m2_ready<=0;
-        end
-        else
-        begin
-        
-        s_data_out <= data_reg;
-        s_last <= select ? m2_last : m1_last ;
-        s_valid <= select ? m2_valid : m1_valid;
-        m1_ready <= select ? 0 : s_ready;
-        m2_ready <= select ? s_ready : 0;
-        end
+always@(negedge clk ) 
+begin
+    if(reset) 
+    begin
+        data <= 0;
+        valid <= 0;
+        r1 <= 0; r2 <= 0;
+        last <=0;   
     end
+    else 
+    begin
+     if (~select) 
+     begin
+          if(s1_valid && m_ready)
+          data <= s1_data;
+          else
+          data<=0;
+     end
+     if( select) 
+     begin
+           if(s2_valid && m_ready)
+           data <= s2_data;
+           else
+           data <=0;
+      end
+     end
+end
 
+always @(negedge clk)
+begin
+    if(reset) 
+    begin
+        m_data <= 0;
+        m_valid <= 0;
+        s1_ready <= 0;
+        s2_ready <=0;
+        
+    end
+    else
+    begin
+       s1_ready <= r1;
+       s2_ready <= r2;
+       m_data <= data;
+       m_valid <= valid;
+    end
+end
+always@(negedge clk)
+begin
+    last <= select ? s2_last : s1_last;
+    end
+assign m_last = last;
+    
 endmodule
+
